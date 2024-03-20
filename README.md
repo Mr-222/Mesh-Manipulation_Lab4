@@ -1,4 +1,4 @@
-# Mesh-Manipulation_CS6491_Lab4
+# Mesh-Manipulation_Lab4
 Midpoint subdivision, Catmull-Clark subdivision, mesh dual, Laplacian smoothing, Taubin smoothing 
 
 1-7: Read in a mesh file (octahedron, cube, icosahedron, dodecahedron, star, torus, S).
