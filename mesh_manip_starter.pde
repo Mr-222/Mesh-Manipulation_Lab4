@@ -220,4 +220,15 @@ void keyPressed()
       return;
     displayed_edge = mesh.swing(displayed_edge);
   }
+  else if (key == 'u') {
+    if (displayed_edge == null)
+      return;
+    displayed_edge = mesh.unSwing(displayed_edge);
+  }
+  else if (key == 'd') {
+    mesh = mesh.dual();
+    // Initialze directed edge that will be visualized
+    Face f0 = mesh.faces.get(0);
+    displayed_edge = mesh.edges.get(new Pair<Vertex, Vertex>(f0.verts.get(0), f0.verts.get(1)));
+  }
 }

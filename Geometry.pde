@@ -1,6 +1,40 @@
 class Vertex {
   public float x, y, z;
   public Face one_face;
+  
+  public Vertex(PVector pos) {
+    this.x = pos.x;
+    this.y = pos.y;
+    this.z = pos.z;
+    this.one_face = null;
+  }
+  
+  public Vertex(float x, float y, float z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.one_face = null;
+  }
+  
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this)
+      return true;
+    if (!(obj instanceof Vertex))
+      return false;
+    
+    Vertex other = (Vertex) obj;
+    return Float.compare(x, other.x) == 0 && Float.compare(y, other.y) == 0 && Float.compare(z, other.z) == 0;
+  }
+  
+  @Override
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + Float.hashCode(x);
+    result = 31 * result + Float.hashCode(y);
+    result = 31 * result + Float.hashCode(z);
+    return result;
+  }
 }
 
 class Face {
