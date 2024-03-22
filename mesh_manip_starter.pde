@@ -238,9 +238,5 @@ void keyPressed()
     displayed_edge = mesh.edges.get(new Pair<Vertex, Vertex>(f0.verts.get(0), f0.verts.get(1)));
   }
   else if (key == 't') {
-    PVector a = new PVector(1.1, 2.2, 3.3);
-    HashMap<PVector, Float> hashMap = new HashMap<>();
-    hashMap.put(new PVector(1.1, 2.2, 3.3), 2.3);
-    print(hashMap.get(a));
   }
 }
