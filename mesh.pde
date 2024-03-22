@@ -213,6 +213,134 @@ class Mesh {
     
     return new Mesh(new_vertices, new_faces);
   }
+  
+  public Mesh catmullSubdivide() {
+    HashMap<Face, PVector> face_points = new HashMap<>();
+    HashMap<Edge, PVector> edge_points = new HashMap<>();
+    HashMap<Vertex, PVector> point_points = new HashMap<>();
+    
+    // Face points
+    for (Face f : this.faces) {
+      PVector face_point = new PVector(0, 0, 0);
+      for (Vertex v : f.verts)
+        face_point.add(new PVector(v.x, v.y, v.z));
+      face_point.div(f.verts.size());
+      face_points.put(f, face_point);
+    }
+   
+    // Edge points
+    for (Face f : this.faces) {
+      // For each edge
+      for (int i = 0; i < f.verts.size(); ++i) {
+        PVector edge_point = new PVector(0, 0, 0);
+        
+        Vertex v1 = f.verts.get(i);
+        Vertex v2 = f.verts.get( (i + 1) % f.verts.size() );
+        
+        Edge e = this.edges.get(new Pair<Vertex, Vertex>(v1, v2));
+        Edge inv_e = this.edges.get(new Pair<Vertex, Vertex>(v2, v1));
+        assert(inv_e != null);
+        Face opposite_f = inv_e.face;
+        
+        edge_point.add(new PVector(v1.x, v1.y, v1.z));
+        edge_point.add(new PVector(v2.x, v2.y, v2.z));
+        edge_point.add(face_points.get(f));
+        edge_point.add(face_points.get(opposite_f));
+        edge_point.div(4f);
+        
+        edge_points.put(e, edge_point);
+        edge_points.put(inv_e, edge_point);
+      }
+    }
+    
+    // Move old points
+    for (Vertex v : this.vertices) {
+      PVector E = new PVector(0, 0, 0);
+      PVector F = new PVector(0, 0, 0);
+        
+      Edge e_start = this.edgeFromVertex(v);
+      Edge e = e_start;
+      float neighbor_edges_count = 0;
+      do {
+        neighbor_edges_count += 1f;
+          
+        PVector edge_point = edge_points.get(e);
+        E.add(new PVector(edge_point.x, edge_point.y, edge_point.z));
+          
+        PVector face_point = face_points.get(e.face);
+        F.add(new PVector(face_point.x, face_point.y, face_point.z));
+          
+        e = this.swing(e);
+      } while (e != e_start);
+        
+      E.div(neighbor_edges_count);
+      E.mult(2f);
+      F.div(neighbor_edges_count);
+      PVector V = new PVector(v.x, v.y, v.z);
+      V.mult(neighbor_edges_count - 3f);
+        
+      PVector point_point = PVector.add(E, F);
+      point_point.add(V);
+      point_point.div(neighbor_edges_count);
+        
+      point_points.put(v, point_point);
+    }
+    
+    // Form faces
+    ArrayList<PVector> new_vertices = new ArrayList<>();
+    HashMap<PVector, Integer> vertex_index = new HashMap<>();
+    ArrayList<ArrayList<Integer>> new_faces = new ArrayList<>();
+    
+    for (Face f : this.faces) {
+      for (int i = 0; i < f.verts.size(); ++i) {
+        ArrayList<Integer> curr_face = new ArrayList<>();
+        
+        Vertex v = f.verts.get(i);
+        Vertex next_v = f.verts.get( (i + 1) % f.verts.size() );
+        Vertex prev_v = f.verts.get( (i == 0) ? f.verts.size() - 1 : i - 1 ); 
+        
+        PVector point_point = point_points.get(v);
+        if (vertex_index.containsKey(point_point))
+          curr_face.add(vertex_index.get(point_point));
+        else {
+          curr_face.add(new_vertices.size());
+          vertex_index.put(point_point, new_vertices.size());
+          new_vertices.add(point_point);
+        }
+        
+        PVector edge_point_1 = edge_points.get(this.edges.get(new Pair<Vertex, Vertex>(v, next_v)));
+        if (vertex_index.containsKey(edge_point_1))
+          curr_face.add(vertex_index.get(edge_point_1));
+        else {
+          curr_face.add(new_vertices.size());
+          vertex_index.put(edge_point_1, new_vertices.size());
+          new_vertices.add(edge_point_1);
+        }
+        
+        PVector face_point = face_points.get(f);
+        if (vertex_index.containsKey(face_point))
+          curr_face.add(vertex_index.get(face_point));
+        else {
+          curr_face.add(new_vertices.size());
+          vertex_index.put(face_point, new_vertices.size());
+          new_vertices.add(face_point);
+        }
+        
+        PVector edge_point_2 = edge_points.get(this.edges.get(new Pair<Vertex, Vertex>(prev_v, v)));
+        if (vertex_index.containsKey(edge_point_2))
+          curr_face.add(vertex_index.get(edge_point_2));
+        else {
+          curr_face.add(new_vertices.size());
+          vertex_index.put(edge_point_2, new_vertices.size());
+          new_vertices.add(edge_point_2);
+        }
+        
+        new_faces.add(curr_face);
+      }
+    }
+    
+    return new Mesh(new_vertices, new_faces);
+  }
 }
 
 Mesh read_mesh (String filename)

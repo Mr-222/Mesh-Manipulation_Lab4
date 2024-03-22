@@ -237,6 +237,12 @@ void keyPressed()
     Face f0 = mesh.faces.get(0);
     displayed_edge = mesh.edges.get(new Pair<Vertex, Vertex>(f0.verts.get(0), f0.verts.get(1)));
   }
+  else if (key == 'c') {
+    mesh = mesh.catmullSubdivide();
+    // Initialze directed edge that will be visualized
+    Face f0 = mesh.faces.get(0);
+    displayed_edge = mesh.edges.get(new Pair<Vertex, Vertex>(f0.verts.get(0), f0.verts.get(1)));
+  }
   else if (key == 't') {
   }
 }
