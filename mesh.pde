@@ -179,7 +179,8 @@ class Mesh {
           do {
             neighbor_edges_count += 1f;
             
-            Vertex curr_v = e.face.verts.get( (e.vert_index + 1) % e.face.verts.size() );
+            int local_index = e.face.verts.indexOf(v);
+            Vertex curr_v = e.face.verts.get( (local_index + 1) % e.face.verts.size() );
             v_cent.add(new PVector(curr_v.x, curr_v.y, curr_v.z));
             
             e = this.swing(e);
@@ -200,7 +201,7 @@ class Mesh {
   }
   
   private Mesh inflate(float miu) {
-    return this.shrink(-miu);
+    return this.shrink(miu);
   }
   
   public Mesh laplacian(float lambda) {
