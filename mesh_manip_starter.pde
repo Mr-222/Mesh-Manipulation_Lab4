@@ -16,6 +16,8 @@ boolean display_edge = false;
 boolean visualize_directed_edge = false;
 Edge displayed_edge;
 
+boolean random_color = false;
+
 Mesh mesh;
 
 PVector linearInterp(PVector start, PVector end, float t) {
@@ -99,6 +101,8 @@ void draw()
   if (mesh != null) {
     for (Face f : mesh.faces) {
       beginShape();
+      if (random_color)
+        fill(f.col);
       for (Vertex v : f.verts) {
         if (per_vertex_normal) {
           PVector n = mesh.calculateVertexNormal(v);
@@ -261,6 +265,9 @@ void keyPressed()
     Face f0 = mesh.faces.get(0);
     displayed_edge = mesh.edges.get(new Pair<Vertex, Vertex>(f0.verts.get(0), f0.verts.get(1)));    
   }
-  else if (key == 't') {
+  else if (key == 'w') {
+    random_color = !random_color;
+    if (random_color && mesh != null)
+      mesh.randomColors();
   }
 }

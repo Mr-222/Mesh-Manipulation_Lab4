@@ -40,10 +40,12 @@ class Vertex {
 class Face {
   public ArrayList<Vertex> verts;
   public ArrayList<Edge> opposites;
+  public color col;
   
   public Face() {
     verts = new ArrayList<>();
     opposites = new ArrayList<>();
+    col = color(200, 200, 200);
   }
   
   public PVector calculateNormal() {

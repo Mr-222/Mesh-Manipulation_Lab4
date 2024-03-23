@@ -62,6 +62,17 @@ class Mesh {
     }
   }
   
+  public void randomColors() {
+    Random rand = new Random();
+    for (Face f : this.faces) {
+      int r = rand.nextInt(256);
+      int g = rand.nextInt(256);
+      int b = rand.nextInt(256);
+      
+      f.col = color(r, g, b);
+    }
+  }
+  
   public PVector calculateVertexNormal(Vertex v) {
     var n = new PVector(0, 0, 0);
     
