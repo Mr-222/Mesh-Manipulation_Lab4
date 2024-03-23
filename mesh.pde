@@ -3,6 +3,8 @@
 // You should modify this routine to store all of the mesh data
 // into a mesh data structure instead of printing it to the screen.
 
+import java.util.Random;
+
 class Mesh {
   public ArrayList<Vertex> vertices;
   public ArrayList<Face> faces;
@@ -63,14 +65,16 @@ class Mesh {
   public PVector calculateVertexNormal(Vertex v) {
     var n = new PVector(0, 0, 0);
     
-    for (Face f : faces) {
-      if (f.verts.contains(v)) {
-        PVector face_normal = f.calculateNormal();
-        n.add(face_normal);
-      }
-    }
-    n.normalize();
+    Edge e_start = this.edgeFromVertex(v);
+    Edge e = e_start;
+    do {
+      Face f = e.face;
+      n.add(f.calculateNormal());
+      
+      e = this.swing(e);
+    } while (e != e_start);
     
+    n.normalize();
     return n;
   }
   
@@ -113,6 +117,108 @@ class Mesh {
     temp = this.opposite(temp);
     
     return temp;
+  }
+  
+  public Mesh applyNoise() {
+    ArrayList<Float> noises = new ArrayList<>(this.vertices.size());
+    Random rand = new Random();
+    for (int i = 0; i < this.vertices.size(); ++i)
+      noises.add(rand.nextFloat() * .2f - .1f);
+    
+    ArrayList<PVector> new_vertices = new ArrayList<>();
+    ArrayList<ArrayList<Integer>> new_faces = new ArrayList<>();    
+    HashMap<PVector, Integer> vertex_index = new HashMap<>();
+    
+    for (Face f : this.faces) {
+      ArrayList<Integer> curr_face = new ArrayList<>();
+      
+      for (Vertex v : f.verts) {
+        PVector v_pos = new PVector(v.x, v.y, v.z);
+        
+        if (vertex_index.containsKey(v_pos))
+          curr_face.add(vertex_index.get(v_pos));
+        else {
+          curr_face.add(new_vertices.size());
+          vertex_index.put(v_pos.copy(), new_vertices.size());
+          
+          PVector n = this.calculateVertexNormal(v);
+          n.mult(noises.get(new_vertices.size()));
+          v_pos.add(n);
+          
+          new_vertices.add(v_pos);
+        }
+      }
+      
+      new_faces.add(curr_face);
+    }
+    
+    return new Mesh(new_vertices, new_faces);
+  }
+  
+  public Mesh shrink(float lambda) {
+    ArrayList<PVector> new_vertices = new ArrayList<>();
+    ArrayList<ArrayList<Integer>> new_faces = new ArrayList<>();    
+    HashMap<PVector, Integer> vertex_index = new HashMap<>();    
+    
+    for (Face f : this.faces) {
+      ArrayList<Integer> curr_face = new ArrayList<>();
+      
+      for (Vertex v : f.verts) {
+        PVector v_pos = new PVector(v.x, v.y, v.z);
+        
+        if (vertex_index.containsKey(v_pos))
+          curr_face.add(vertex_index.get(v_pos));
+        else {
+          curr_face.add(new_vertices.size());
+          vertex_index.put(v_pos.copy(), new_vertices.size());          
+          
+          PVector v_cent = new PVector(0, 0, 0);
+          Edge e_start = this.edgeFromVertex(v);
+          Edge e = e_start;
+          float neighbor_edges_count = 0;
+          do {
+            neighbor_edges_count += 1f;
+            
+            Vertex curr_v = e.face.verts.get( (e.vert_index + 1) % e.face.verts.size() );
+            v_cent.add(new PVector(curr_v.x, curr_v.y, curr_v.z));
+            
+            e = this.swing(e);
+          } while (e != e_start);
+          
+          v_cent.div(neighbor_edges_count);
+          PVector delta_v = PVector.sub(v_cent, v_pos);
+          delta_v.mult(lambda);
+          
+          new_vertices.add(PVector.add(v_pos, delta_v));
+        }
+      }
+      
+      new_faces.add(curr_face);
+    }
+    
+    return new Mesh(new_vertices, new_faces);
+  }
+  
+  private Mesh inflate(float miu) {
+    return this.shrink(-miu);
+  }
+  
+  public Mesh laplacian(float lambda) {
+    Mesh mesh = this;
+    for (int i = 0; i < 40; ++i)
+      mesh = mesh.shrink(lambda);
+      
+    return mesh;
+  }
+  
+  public Mesh taubin(float lambda, float miu) {
+    Mesh mesh = this;
+    for (int i = 0; i < 40; ++i) {
+      mesh = mesh.shrink(lambda);
+      mesh = mesh.inflate(miu);
+    }
+    
+    return mesh;
   }
   
   private Edge edgeFromVertex(Vertex v) {
@@ -221,10 +327,7 @@ class Mesh {
     
     // Face points
     for (Face f : this.faces) {
-      PVector face_point = new PVector(0, 0, 0);
-      for (Vertex v : f.verts)
-        face_point.add(new PVector(v.x, v.y, v.z));
-      face_point.div(f.verts.size());
+      PVector face_point = f.centroid();
       face_points.put(f, face_point);
     }
    
